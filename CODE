@@ -1,0 +1,105 @@
+# A* BIDIRECTIONAL
+def bidirectional_astar(src, dst):
+    open_set_forward = [src]
+    open_set_backward = [dst]
+    closed_set_forward = set()
+    closed_set_backward = set()
+
+    g_forward = {src: 0}
+    g_backward = {dst: 0}
+
+    parent_forward = {src: src}
+    parent_backward = {dst: dst}
+
+    intersection = None  # To store the intersecting node
+
+    while open_set_forward and open_set_backward:
+        n_forward = None
+        n_backward = None
+
+        # Forward direction to find lowest f
+        for v in open_set_forward:
+            if n_forward is None or g_forward[v] + h[v] < g_forward[n_forward] + h[n_forward]:
+                n_forward = v
+
+        # Backward direction to fid lowest f
+        for v in open_set_backward:
+            if n_backward is None or g_backward[v] + h[v] < g_backward[n_backward] + h[n_backward]:
+                n_backward = v
+
+        if n_forward is None or n_backward is None:
+            print('Path does not exist!')
+            return None
+
+        # Check if intersection is found
+        if n_forward in closed_set_backward or n_backward in closed_set_forward:
+            intersection = n_forward if n_forward in closed_set_backward else n_backward
+            break
+
+        open_set_forward.remove(n_forward)
+        open_set_backward.remove(n_backward)
+        closed_set_forward.add(n_forward)
+        closed_set_backward.add(n_backward)
+
+        for neighbor, cost in graph[n_forward].items():
+            if neighbor in closed_set_forward:
+                continue
+            tentative_g = g_forward[n_forward] + cost
+            if neighbor not in open_set_forward or tentative_g < g_forward.get(neighbor, float('inf')):
+                parent_forward[neighbor] = n_forward
+                g_forward[neighbor] = tentative_g
+                if neighbor not in open_set_forward:
+                    open_set_forward.append(neighbor)
+
+        for neighbor, cost in graph[n_backward].items():
+            if neighbor in closed_set_backward:
+                continue
+            tentative_g = g_backward[n_backward] + cost
+            if neighbor not in open_set_backward or tentative_g < g_backward.get(neighbor, float('inf')):
+                parent_backward[neighbor] = n_backward
+                g_backward[neighbor] = tentative_g
+                if neighbor not in open_set_backward:
+                    open_set_backward.append(neighbor)
+
+    if intersection is None:
+        print('Path not found!')
+        return None
+
+    # Reconstruct the path
+    path = []
+    current = intersection
+    while current != src:
+        path.append(current)
+        current = parent_forward[current]
+    path.append(src)
+    path.reverse()
+    current = intersection
+    while current != dst:
+        current = parent_backward[current]
+        path.append(current)
+
+    print('Path found:', path)
+    return path
+
+# Define the graph and heuristic values (same as your previous code)
+graph = {
+    'A': {'B': 2, 'C': 4},
+    'B': {'A': 2, 'C': 3, 'D': 8},
+    'C': {'A': 4, 'B': 3, 'E': 5, 'D': 2},
+    'D': {'B': 8, 'C': 2, 'E': 11, 'F': 22},
+    'E': {'C': 5, 'D': 11, 'F': 1},
+    'F': {'D': 22, 'E': 1}
+}
+
+h = {
+    'A': 2,
+    'B': 3,
+    'C': 3,
+    'D': 9,
+    'E': 7,
+    'F': 11
+}
+
+src = 'A'
+dst = 'F'
+bidirectional_astar(src, dst)
